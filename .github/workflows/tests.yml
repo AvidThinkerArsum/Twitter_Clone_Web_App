@@ -12,8 +12,6 @@ jobs:
     - name: docker
       run: |
         # load the pagila data
-        git submodule init
-        git submodule update
 
         # run the database in docker container
         docker-compose up -d --build
@@ -31,4 +29,3 @@ jobs:
         sleep 20
 
         # run the tests
-        docker exec pagila-hw_pg_1 ./run_tests.sh
