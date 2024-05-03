@@ -11,7 +11,7 @@ services:
       - POSTGRES_PASSWORD=pass
       - PGUSER=postgres
     ports:
-      - 1348:5432 
+      - 1620:5432 
 
   web:
     build: ./services/web
