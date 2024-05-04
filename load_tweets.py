@@ -377,12 +377,14 @@ if __name__ == '__main__':
             print(datetime.datetime.now(),filename)
             for subfilename in sorted(archive.namelist(), reverse=True):
                 with io.TextIOWrapper(archive.open(subfilename)) as f:
+                    rows_inserted = 0
                     for i,line in enumerate(f):
-
+                        if rows_inserted >= 50:
+                            break
                         # load and insert the tweet
                         tweet = json.loads(line)
                         insert_tweet(connection,tweet)
-
+                        rows_inserted += 1
                         # print message
                         if i%args.print_every==0:
                             print(datetime.datetime.now(),filename,subfilename,'i=',i,'id=',tweet['id'])
