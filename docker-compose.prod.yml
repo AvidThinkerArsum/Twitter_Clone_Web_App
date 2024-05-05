@@ -20,6 +20,7 @@ services:
       - POSTGRES_USER=postgres
       - POSTGRES_PASSWORD=pass
       - PGUSER=postgres
+      - POSTGRES_DB=Arsum
     ports:
       - 1620:5432 
 

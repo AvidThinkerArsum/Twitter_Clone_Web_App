@@ -11,8 +11,7 @@ CREATE TABLE users (
     id BIGSERIAL PRIMARY KEY,
     username TEXT NOT NULL UNIQUE,
     password TEXT NOT NULL,
-    age INTEGER,
-    city TEXT
+    age INTEGER
 );
 
 CREATE TABLE messages (
@@ -21,3 +20,5 @@ CREATE TABLE messages (
     message TEXT NOT NULL,
     time TIMESTAMP NOT NULL DEFAULT current_timestamp
 );
+
+COMMIT;
