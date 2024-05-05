@@ -10,6 +10,7 @@ services:
       - POSTGRES_USER=postgres
       - POSTGRES_PASSWORD=pass
       - PGUSER=postgres
+      - ENV=dev
     ports:
       - 1620:5432 
 
@@ -23,16 +24,10 @@ services:
     env_file:
       - ./.env.dev
     depends_on:
-      - db
-  db:
-    image: postgres:13
-    volumes:
-      - postgres_data:/var/lib/postgresql/data/
-    environment:
-      - POSTGRES_USER=hello_flask
-      - POSTGRES_PASSWORD=hello_flask
-      - POSTGRES_DB=hello_flask_dev
+      - postgres
+
+        
+
 
 volumes:
-  postgres_data:
   postgres:  

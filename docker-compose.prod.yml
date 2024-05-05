@@ -10,6 +10,20 @@ services:
       - 1337:80
     depends_on:
       - web  
+ 
+  postgres:
+    build: ./services/postgres
+    volumes:
+      - ./:/tmp/db
+      - postgresi_prod:/var/lib/postgresql/data 
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=pass
+      - PGUSER=postgres
+      - ENV=prod
+    ports:
+      - 1620:5432 
+
   web:
     build: 
       context: ./services/web
@@ -23,15 +37,12 @@ services:
     env_file:
       - ./.env.prod
     depends_on:
-      - db
-  db:
-    image: postgres:13
-    volumes:
-      - postgres_data_prod:/var/lib/postgresql/data/
-    env_file:
-      - ./.env.prod.db
+      - postgres
+      
+      
 
 volumes:
   postgres_data_prod:
   static_volume:
   media_volume:
+  postgres_prod:
