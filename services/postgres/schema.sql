@@ -1,5 +1,3 @@
-CREATE EXTENSION postgis;
-
 \set ON_ERROR_STOP on
 
 BEGIN;
