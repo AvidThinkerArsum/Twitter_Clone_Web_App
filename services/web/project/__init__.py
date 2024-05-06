@@ -28,7 +28,7 @@ class User(db.Model):
 
 @app.route("/")
 def hello_world():
-    return render_template(root.html)
+    return render_template('root.html')
 
 
 @app.route("/static/<path:filename>")
