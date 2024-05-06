@@ -34,12 +34,14 @@ def generate_users(num_users):
         username=''.join(generate_words(2))
         password=''.join(generate_words(3))
         age=random.randint(8,100)
-        sql=sqlalchemy.sql.text("""INSERT INTO users (username, password, age) VALUES (:u, :p, :a);""")
+        cell=''.join([str(random.randint(0,9)) for _ in range(10)])
+        sql=sqlalchemy.sql.text("""INSERT INTO users (username, password, age, cell) VALUES (:u, :p, :a, :c);""")
         try:
             res = connection.execute(sql, {
                 'u': username,
                 'p': password,
-                'a': age
+                'a': age,
+                'c': cell
                 })
         except IntegrityError as e:
             print("Could Not Insert User Number: ",i, " Due To Duplication ","Error Message: ", e)

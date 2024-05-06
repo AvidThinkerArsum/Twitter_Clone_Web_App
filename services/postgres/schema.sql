@@ -11,7 +11,8 @@ CREATE TABLE users (
     id BIGSERIAL PRIMARY KEY,
     username TEXT NOT NULL UNIQUE,
     password TEXT NOT NULL,
-    age INTEGER
+    age INTEGER,
+    cell VARCHAR(10) UNIQUE NOT NULL
 );
 
 CREATE TABLE messages (
