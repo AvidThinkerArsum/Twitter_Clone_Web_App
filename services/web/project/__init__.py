@@ -5,6 +5,7 @@ from flask import (
     jsonify,
     send_from_directory,
     request,
+    render_template
 )
 from flask_sqlalchemy import SQLAlchemy
 from werkzeug.utils import secure_filename
@@ -27,7 +28,7 @@ class User(db.Model):
 
 @app.route("/")
 def hello_world():
-    return jsonify(hello="world")
+    return render_template(root.html)
 
 
 @app.route("/static/<path:filename>")
