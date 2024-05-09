@@ -5,6 +5,23 @@
     box-sizing: border-box;
 }
 
+.powered-by {
+    position: fixed;  /* Fixed positioning relative to the viewport */
+    right: 10px;      /* 10px from the right edge of the viewport */
+    bottom: 10px;     /* 10px from the bottom edge of the viewport */
+    display: flex;    /* Aligns items in a row */
+    align-items: center; /* Center-aligns items vertically */
+    z-index: 1000;    /* Keeps on top of other content */
+}
+
+
+.tech-icon {
+    width: 30px;    /* Width of each icon */
+    height: auto;   /* Maintain aspect ratio */
+    margin-left: 5px; /* Space between icons */
+}
+
+
 /* Body and Overall Layout */
 body {
     background-color: #f5f5f5; /* Updated to a more neutral background color */
