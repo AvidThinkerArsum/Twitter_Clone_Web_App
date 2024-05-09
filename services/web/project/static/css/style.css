@@ -16,7 +16,7 @@
 
 
 .tech-icon {
-    width: 30px;    /* Width of each icon */
+    width: 70px;    /* Width of each icon */
     height: auto;   /* Maintain aspect ratio */
     margin-left: 5px; /* Space between icons */
 }
