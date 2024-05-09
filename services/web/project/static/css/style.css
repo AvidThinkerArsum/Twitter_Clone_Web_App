@@ -1,0 +1,99 @@
+/* Basic Reset */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+/* Body and Overall Layout */
+body {
+    background-color: #e0f7fa; /* Light blue background */
+    font-family: 'Arial', sans-serif;
+    color: #333;
+    line-height: 1.6;
+    margin: 0 auto;
+    max-width: 95%;
+    padding: 20px;
+}
+
+/* Navigation Bar */
+.navbar {
+    background-color: #007BFF; /* Blue background for navbar */
+    color: white;
+    padding: 10px 20px;
+    border-radius: 5px;
+    margin-bottom: 20px;
+}
+
+.navbar a {
+    color: white;
+    text-decoration: none;
+    padding: 10px;
+}
+
+.navbar a:hover {
+    background-color: #0056b3;
+}
+
+/* Main Content Styling */
+.container {
+    background-color: #ffffff; /* White background for containers */
+    padding: 15px;
+    margin-bottom: 10px;
+    border-radius: 8px;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+}
+
+/* Messages Layout */
+.message-box {
+    width: 100%;
+    height: 150px;
+    background: #fff;
+    border: 2px solid #007BFF;
+    padding: 10px;
+    margin-bottom: 20px;
+}
+
+/* Button Styling */
+.submit-button {
+    display: block;
+    width: 100%;
+    padding: 10px;
+    background-color: #28a745;
+    color: white;
+    border: none;
+    cursor: pointer;
+}
+
+.submit-button:hover {
+    background-color: #218838;
+}
+
+/* Text Alignment Helpers */
+.text-right {
+    text-align: right;
+}
+
+.text-center {
+    text-align: center;
+}
+
+/* Utility Classes */
+.float-right {
+    float: right;
+}
+
+.clearfix::after {
+    content: "";
+    clear: both;
+    display: table;
+}
+
+/* Responsiveness */
+@media (max-width: 768px) {
+    .navbar, .message-box, .submit-button {
+        width: 100%;
+        padding: 10px;
+    }
+}
+
