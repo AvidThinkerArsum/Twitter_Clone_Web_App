@@ -1,18 +1,19 @@
 <html>
     <head>
-        <title>ANC'S WebPage - Move with Caution</title>
-        <link rel="stylesheet" href="{{url_for('static', filename='css/style.css')}}">
+        <title> Random Generating TWT Clone</title>
+        <link rel="stylesheet" href="{{url_for('static', filename='css/style.css')}}"
     </head>
     <body>
-        <h1>Hey There :)</h1>
+        <h1> Random Generating TWT Clone :)</h1>
         <ol>
-            <li><a href='/'>Home</a></li>
+            <li><a href="/">Menu</a></li>
+            <li><a href='/search'>Search</a></li>
             {% if logged_in %}
-                <li><a href='/create_message'>Create Message</a></li>
-                <li><a href='/logout'>Logout</a></li>
+                <li><a href="/logout">Logout</a></li>
+                <li><a href="/create_message">Create Message</a></li> <!-- Add this line -->
             {% else %}
-                <li><a href='/login'>Login</a></li>
-                <li><a href='/create_user'>Create User</a></li>
+                <li><a href="/login">Login</a></li>
+                <li><a href="/create_user">Create User</a></li>
             {% endif %}
         </ol>
 
@@ -20,3 +21,4 @@
         {% endblock %}
     </body>
 </html>
+

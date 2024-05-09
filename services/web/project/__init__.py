@@ -1,34 +1,42 @@
-#from flask import (
+
+
+# from flask import (
 #    Flask,
 #    jsonify,
 #    send_from_directory,
 #    request,
 #    render_template
-#)
+# )
 
-
+import sqlalchemy
 import bleach
 import os
-import sys
 from datetime import datetime  # Import the datetime module here
 
-from flask import Flask, request, render_template, make_response, redirect, url_for, flash, session
+from flask import (
+    Flask,
+    request,
+    render_template,
+    make_response,
+    redirect,
+    url_for,
+    flash,
+    session
+)
 from flask_sqlalchemy import SQLAlchemy
-import sqlalchemy
 from werkzeug.utils import secure_filename
-from sqlalchemy import sql
 from sqlalchemy import text
-from contextlib import contextmanager
 from math import ceil
-
 
 app = Flask(__name__)
 app.config.from_object("project.config.Config")
 db = SQLAlchemy(app)
 
-engine = sqlalchemy.create_engine("postgresql://postgres:pass@postgres:5432", connect_args={
-    'application_name': '__init__.py',
-    })
+engine = sqlalchemy.create_engine(
+    "postgresql://postgres:pass@postgres:5432",
+    connect_args={'application_name': '__init__.py'}
+)
+
 connection = engine.connect()
 
 
@@ -38,6 +46,7 @@ if __name__ == "__main__":
 
 
 class User(db.Model):
+
     __tablename__ = "users"
 
     id = db.Column(db.Integer, primary_key=True)
@@ -48,6 +57,34 @@ class User(db.Model):
         self.email = email
 
 
+#def fetch_latest_messages(page_number):
+#    offset = (page_number - 1) * 20
+#    query = text("""
+#        SELECT creator_id, message, time, id
+#        FROM messages
+#        ORDER BY time DESC
+#        LIMIT 20 OFFSET :offset;
+#    """)
+#    result = connection.execute(query, {'offset': offset})
+#
+#    sender_ids = [row[0] for row in result.fetchall()]
+#    user_data_map = {}
+#    if sender_ids:
+#        user_query = text("""
+#            SELECT id, username, age
+#            FROM users
+#            WHERE id IN :ids;
+#        """)
+#    user_result = connection.execute(
+#        user_query,
+#        {'ids': tuple(sender_ids)}
+#    )
+#
+#    user_data_map = {
+#        row[0]: (row[1], row[2])
+#        for row in user_result.fetchall()
+#    }
+
 def fetch_latest_messages(page_number):
     offset = (page_number - 1) * 20
     query = text("""
@@ -57,27 +94,33 @@ def fetch_latest_messages(page_number):
         LIMIT 20 OFFSET :offset;
     """)
     result = connection.execute(query, {'offset': offset})
-    
+
     sender_ids = [row[0] for row in result.fetchall()]
-    
     user_data_map = {}
 
+    # Initialize user_query with None
     user_query = None
-
+    
     if sender_ids:
         user_query = text("""
             SELECT id, username, age
             FROM users
             WHERE id IN :ids;
         """)
-        
-    if user_query is not None:    
 
-        user_result = connection.execute(user_query, {'ids': tuple(sender_ids)})
-        user_data_map = {row[0]: (row[1], row[2]) for row in user_result.fetchall()}
-    
+    if user_query is not None:
+        user_result = connection.execute(
+            user_query,
+            {'ids': tuple(sender_ids)}
+        )
+
+        user_data_map = {
+            row[0]: (row[1], row[2])
+            for row in user_result.fetchall()
+        }
+
     result = connection.execute(query, {'offset': offset})
-    
+
     messages = []
     for row in result:
         sender_id, message, created_at, msg_id = row
@@ -91,27 +134,48 @@ def fetch_latest_messages(page_number):
             'age': age,
             'created_at': created_at,
         })
-    
+
     return messages
 
 
+# def login_info(username, password):
+#    query = text('''
+#        SELECT id, age
+#        FROM users
+#        WHERE username = :username AND password = :password;
+#    ''')
+#    result = connection.execute(
+#        query,
+#        {
+#            'username': username,
+#            'password': password,
+#        }
+#    )
+#
+#    row = result.fetchone()
 
 def login_info(username, password):
     query = text('''
-        SELECT id, age 
+        SELECT id, age
         FROM users
         WHERE username = :username AND password = :password;
     ''')
     try:
-        result = connection.execute(query, {'username': username, 'password': password})
+        result = connection.execute(
+            query,
+            {
+                'username': username,
+                'password': password
+            }
+        )
+
         row = result.fetchone()
         return row
-    except EXCEPTION as e:
-        print(f"Error Reached: {e}")
-        connection.rollback()
+    except Exception as e:
+        # Log the error and roll back the transaction if necessary
+        print(f"Error occurred: {e}")
+        connection.rollback()  # Roll back the transaction
         return None
-
-
 
 
 @app.route('/')
@@ -127,7 +191,7 @@ def root():
         if login:
             user_id, age = login
         else:
-            logged_in = False  # Invalidate session if credentials are incorrect
+            logged_in = False
             session.clear()
 
     # Set the current page number
@@ -137,10 +201,14 @@ def root():
     messages = fetch_latest_messages(page_number)
 
     # Render the template with context
-    return render_template('root.html', messages=messages, logged_in=logged_in, username=username,age=age, page_number=page_number)
-
-
-
+    return render_template(
+        'root.html',
+        messages=messages,
+        logged_in=logged_in,
+        username=username,
+        age=age,
+        page_number=page_number
+    )
 
 
 def print_debug_info():
@@ -155,9 +223,6 @@ def print_debug_info():
     # cookies
     print('request.cookies.get("username") =', request.cookies.get("username"))
     print('request.cookies.get("password") =', request.cookies.get("password"))
-
-
-
 
 
 @app.route('/login', methods=['GET', 'POST'])
@@ -185,13 +250,8 @@ def login():
     return render_template('login.html')
 
 
-
-
-
 def authenticate_user(username, password):
     return login_info(username, password)
-
-
 
 
 def handle_successful_login(user_info, username):
@@ -208,13 +268,9 @@ def handle_successful_login(user_info, username):
     return response
 
 
-
-
 def handle_failed_login():
     flash('Incorrect username or password. Please try again.')
     return render_template('login.html', bad_credentials=True)
-
-
 
 
 @app.route('/logout')
@@ -231,18 +287,15 @@ def logout():
     return response
 
 
-
-
-
-@app.route('/create_account', methods=['GET', 'POST'])
-def create_account():
+@app.route('/create_user', methods=['GET', 'POST'])
+def create_user():
     # Print debug information
     print_debug_info()
 
     # Get logged-in status from session or cookies
     logged_in = session.get('logged_in', False)
-    username = session.get('username', request.cookies.get('username'))
-    password = request.cookies.get('password')
+    # username = session.get('username', request.cookies.get('username'))
+    # password = request.cookies.get('password')
 
     # Redirect logged-in users to home page
     if logged_in:
@@ -254,35 +307,29 @@ def create_account():
         new_password = request.form.get('new_password')
         new_password2 = request.form.get('new_password2')
         new_age = request.form.get('new_age')
-        new_cell = request.form.get('new_cell')
 
         # Check for empty fields
         if not new_username or not new_password:
-            return render_template('create_account.html', one_blank=True)
-        
+            return render_template('create_user.html', one_blank=True)
+
         # Check for matching passwords
         if new_password != new_password2:
-            return render_template('create_account.html', not_matching=True)
+            return render_template('create_user.html', not_matching=True)
 
         # Check for valid age input
         if not new_age.isnumeric():
-            return render_template('create_account.html', invalid_age=True)
-
-        # Check for valid cell input
-        if not new_cell.isnumeric() or len(new_cell) != 10:
-            return render_template('create_account.html', invalid_cell=True)
+            return render_template('create_user.html', invalid_age=True)
 
         # Try creating a new user
         try:
             sql = text('''
-                INSERT INTO users (username, password, age, cell)
-                VALUES (:username, :password, :age, :cell)
+                INSERT INTO users (username, password, age)
+                VALUES (:username, :password, :age)
             ''')
             connection.execute(sql, {
                 'username': new_username,
                 'password': new_password,
-                'age': int(new_age),  # Convert age to integer
-                'cell': new_cell
+                'age': int(new_age)  # Convert age to integer
             })
 
             # Create response and set cookies
@@ -292,13 +339,10 @@ def create_account():
             return response
         except sqlalchemy.exc.IntegrityError:
             # Handle case where user already exists
-            return render_template('create_account.html', already_exists=True)
+            return render_template('create_user.html', already_exists=True)
 
-    # Render the create_account.html template for GET requests
-    return render_template('create_account.html')
-
-
-
+    # Render the create_user.html template for GET requests
+    return render_template('create_user.html')
 
 
 @app.route('/create_message', methods=['GET', 'POST'])
@@ -316,10 +360,21 @@ def create_message():
         return redirect('/')
 
     # Retrieve user ID based on username and password
-    user_query = text("SELECT id FROM users WHERE username = :username AND password = :password")
-    result = connection.execute(user_query, {"username": username, "password": password})
+    user_query = text(
+        "SELECT id FROM users "
+        "WHERE username = :username AND password = :password"
+    )
+
+    result = connection.execute(
+        user_query,
+        {
+            "username": username,
+            "password": password,
+        }
+    )
+
     row = result.fetchone()
-    
+
     # Handle case where user is not found
     if not row:
         return redirect('/')
@@ -328,14 +383,18 @@ def create_message():
     # Handle form submission
     if request.method == 'POST':
         message = request.form.get('message')
-        
+
         # Validate form data
         if not message:
-            return render_template('create_message.html', invalid_message=True, logged_in=logged_in)
+            return render_template(
+                'create_message.html',
+                invalid_message=True,
+                logged_in=logged_in
+            )
 
         # Insert the new message
         try:
-            time = str(datetime.now()).split('.')[0]  # Get the current timestamp (excluding milliseconds)
+            time = str(datetime.now()).split('.')[0]
             insert_query = text("""
                 INSERT INTO messages (creator_id, message, time)
                 VALUES (:creator_id, :message, :time);
@@ -347,16 +406,22 @@ def create_message():
             })
 
             # Successfully created message
-            return render_template('create_message.html', message_sent=True, logged_in=logged_in)
+            return render_template(
+                'create_message.html',
+                message_sent=True,
+                logged_in=logged_in
+            )
 
         except sqlalchemy.exc.IntegrityError:
             # Handle error (e.g., if there was an issue with insertion)
-            return render_template('create_message.html', already_exists=True, logged_in=logged_in)
-    
+            return render_template(
+                'create_message.html',
+                already_exists=True,
+                logged_in=logged_in
+            )
+
     # Render the create_message.html template for GET requests
     return render_template('create_message.html', logged_in=logged_in)
-
-
 
 
 @app.route('/search', methods=['GET', 'POST'])
@@ -461,15 +526,12 @@ def search_message():
     )
 
 
-
-
-
-#@app.route("/static/<path:filename>")
-#def staticfiles(filename):
+# @app.route("/static/<path:filename>")
+# def staticfiles(filename):
 #    return send_from_directory(app.config["STATIC_FOLDER"], filename)
 
-#@app.route("/media/<path:filename>")
-#def mediafiles(filename):
+# @app.route("/media/<path:filename>")
+# def mediafiles(filename):
 #    return send_from_directory(app.config["MEDIA_FOLDER"], filename)
 
 
