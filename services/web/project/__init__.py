@@ -1,6 +1,3 @@
-#sys.path.append('/home/Luis.Gomez.25/BigDataFinal2/services/web')
-
-
 #from flask import (
 #    Flask,
 #    jsonify,
@@ -22,6 +19,7 @@ from werkzeug.utils import secure_filename
 from sqlalchemy import sql
 from sqlalchemy import text
 from contextlib import contextmanager
+from math import ceil
 
 
 app = Flask(__name__)
@@ -32,6 +30,11 @@ engine = sqlalchemy.create_engine("postgresql://postgres:pass@postgres:5432", co
     'application_name': '__init__.py',
     })
 connection = engine.connect()
+
+
+if __name__ == "__main__":
+    # Bind to all network interfaces and specify the port to run on
+    app.run(host='0.0.0.0', port=5432)
 
 
 class User(db.Model):
@@ -58,12 +61,18 @@ def fetch_latest_messages(page_number):
     sender_ids = [row[0] for row in result.fetchall()]
     
     user_data_map = {}
+
+    user_query = None
+
     if sender_ids:
         user_query = text("""
             SELECT id, username, age
             FROM users
             WHERE id IN :ids;
         """)
+        
+    if user_query is not None:    
+
         user_result = connection.execute(user_query, {'ids': tuple(sender_ids)})
         user_data_map = {row[0]: (row[1], row[2]) for row in user_result.fetchall()}
     
@@ -85,16 +94,25 @@ def fetch_latest_messages(page_number):
     
     return messages
 
+
+
 def login_info(username, password):
     query = text('''
         SELECT id, age 
         FROM users
         WHERE username = :username AND password = :password;
     ''')
-    result = connection.execute(query, {'username': username, 'password': password})
-    row = result.fetchone()
-    
-    return (row[0], row[1]) if row else None
+    try:
+        result = connection.execute(query, {'username': username, 'password': password})
+        row = result.fetchone()
+        return row
+    except EXCEPTION as e:
+        print(f"Error Reached: {e}")
+        connection.rollback()
+        return None
+
+
+
 
 @app.route('/')
 def root():
@@ -121,24 +139,9 @@ def root():
     # Render the template with context
     return render_template('root.html', messages=messages, logged_in=logged_in, username=username,age=age, page_number=page_number)
 
-#def root():
-#    username = request.cookies.get('username')
-#    password = request.cookies.get('password')
-#    login = login_info(username, password)
-#    
-#    logged_in = False
-#    age = None
-#    if login:
-#        logged_in = True
-#        user_id, age = login
-#    else:
-#        logged_in = False
-#    print('logged in:', logged_in)
-#    
-#    page_number = int(request.args.get('page', 1))
-#    messages = fetch_latest_messages(page_number)
-#    
-#    return render_template('root.html', messages=messages, logged_in=logged_in, username=username, age=age, page_number=page_number)
+
+
+
 
 def print_debug_info():
     # GET method
@@ -155,32 +158,7 @@ def print_debug_info():
 
 
 
-#@app.route('/login', methods=['GET', 'POST'])
-#def login():
-#    print_debug_info()
-#    
-#    if request.method == 'POST':
-#        username = request.form.get('username')
-#        password = request.form.get('password')
-#
-#        user_info = authenticate_user(username, password)
-#
-#        if user_info:
-#            return handle_successful_login(user_info, username)
-#        
-#        return handle_failed_login()
-#
-#    return render_template('login.html')
-#        else:
-#            template = render_template(
-#                'login.html', 
-#                bad_credentials=False,
-#                logged_in=True)
-#            #return template
-#            response = make_response(template)
-#            response.set_cookie('username', username)
-#            response.set_cookie('password', password)
-#            return response
+
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
@@ -207,17 +185,14 @@ def login():
     return render_template('login.html')
 
 
+
+
+
 def authenticate_user(username, password):
     return login_info(username, password)
 
 
-#def handle_successful_login(user_info, username):
-#    user_id, age = user_info
-#    session['user_id'] = user_id
-#    session['username'] = username
-#    session['logged_in'] = True
-#    return redirect(url_for('root'))
-#    print('session logged_in:', session['logged_in'])
+
 
 def handle_successful_login(user_info, username):
     user_id, age = user_info
@@ -233,9 +208,14 @@ def handle_successful_login(user_info, username):
     return response
 
 
+
+
 def handle_failed_login():
     flash('Incorrect username or password. Please try again.')
     return render_template('login.html', bad_credentials=True)
+
+
+
 
 @app.route('/logout')
 def logout():
@@ -249,6 +229,10 @@ def logout():
 
     # Return the response to the client
     return response
+
+
+
+
 
 @app.route('/create_account', methods=['GET', 'POST'])
 def create_account():
@@ -270,6 +254,7 @@ def create_account():
         new_password = request.form.get('new_password')
         new_password2 = request.form.get('new_password2')
         new_age = request.form.get('new_age')
+        new_cell = request.form.get('new_cell')
 
         # Check for empty fields
         if not new_username or not new_password:
@@ -283,16 +268,21 @@ def create_account():
         if not new_age.isnumeric():
             return render_template('create_account.html', invalid_age=True)
 
+        # Check for valid cell input
+        if not new_cell.isnumeric() or len(new_cell) != 10:
+            return render_template('create_account.html', invalid_cell=True)
+
         # Try creating a new user
         try:
             sql = text('''
-                INSERT INTO users (username, password, age)
-                VALUES (:username, :password, :age)
+                INSERT INTO users (username, password, age, cell)
+                VALUES (:username, :password, :age, :cell)
             ''')
             connection.execute(sql, {
                 'username': new_username,
                 'password': new_password,
-                'age': int(new_age)  # Convert age to integer
+                'age': int(new_age),  # Convert age to integer
+                'cell': new_cell
             })
 
             # Create response and set cookies
@@ -306,6 +296,10 @@ def create_account():
 
     # Render the create_account.html template for GET requests
     return render_template('create_account.html')
+
+
+
+
 
 @app.route('/create_message', methods=['GET', 'POST'])
 def create_message():
@@ -364,13 +358,119 @@ def create_message():
 
 
 
-@app.route("/static/<path:filename>")
-def staticfiles(filename):
-    return send_from_directory(app.config["STATIC_FOLDER"], filename)
 
-@app.route("/media/<path:filename>")
-def mediafiles(filename):
-    return send_from_directory(app.config["MEDIA_FOLDER"], filename)
+@app.route('/search', methods=['GET', 'POST'])
+def search_message():
+    # Get username and password from cookies/session
+    # username = request.cookies.get('username')
+    # password = request.cookies.get('password')
+    logged_in = session.get('logged_in', False)
+
+    # Check if the user is logged in
+    if not logged_in:
+        return redirect('/')
+
+    # Initialize the page number variable
+    page_number = int(request.args.get('page', 1))
+    search_query = (
+        request.form.get('query')
+        if request.method == 'POST'
+        else request.args.get('query')
+    )
+
+    # If there is no search query, return the template with default variables
+    if not search_query:
+        return render_template(
+            'search.html',
+            logged_in=logged_in,
+            page_number=page_number,
+            query=None,
+            total_pages=0,
+            search_results=[]
+        )
+
+    # Define the number of results per page
+    per_page = 20
+
+    # Convert the search query to a tsquery string
+    words = (f"'{word.strip()}'" for word in search_query.split())
+    tsquery_string = ' & '.join(words)
+
+    # Calculate the offset for pagination (define offset before using it)
+    offset = (page_number - 1) * per_page
+
+    # Define the query to fetch search results
+    query = text("""
+        SELECT
+            id,
+            ts_headline(
+                'english',
+                message,
+                to_tsquery(:tsquery_string),
+                'StartSel="<mark><b>", StopSel="</b></mark>"'
+            ) AS highlighted_message,
+            time AS created_at,
+            ts_rank(
+                to_tsvector('english', message),
+                to_tsquery(:tsquery_string)
+            ) AS relevance
+
+        FROM
+            messages
+        WHERE
+            to_tsvector('english', message) @@ to_tsquery(:tsquery_string)
+        ORDER BY
+            relevance DESC
+        LIMIT
+            :per_page OFFSET :offset;
+    """)
+
+    # Parameters for the query
+    params = {
+        'tsquery_string': tsquery_string,
+        'per_page': per_page,
+        'offset': offset
+    }
+
+    # Execute the query
+    result = connection.execute(query, params)
+    search_results = result.fetchall()
+
+    # Calculate the total number of results
+    total_query = text("""
+        SELECT COUNT(*)
+        FROM messages
+        WHERE to_tsvector('english', message) @@ to_tsquery(:tsquery_string);
+    """)
+    total_results = connection.execute(
+        total_query,
+        {'tsquery_string': tsquery_string}
+    ).scalar()
+
+    # Calculate the total number of pages
+    total_pages = ceil(total_results / per_page)
+
+    # Render the search results in a template with pagination
+    return render_template(
+        'search.html',
+        search_results=search_results,
+        logged_in=logged_in,
+        page_number=page_number,
+        query=search_query,
+        total_pages=total_pages
+    )
+
+
+
+
+
+#@app.route("/static/<path:filename>")
+#def staticfiles(filename):
+#    return send_from_directory(app.config["STATIC_FOLDER"], filename)
+
+#@app.route("/media/<path:filename>")
+#def mediafiles(filename):
+#    return send_from_directory(app.config["MEDIA_FOLDER"], filename)
 
 
 @app.route("/upload", methods=["GET", "POST"])
