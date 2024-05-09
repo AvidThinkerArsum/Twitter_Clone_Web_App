@@ -22,4 +22,9 @@ CREATE TABLE messages (
     time TIMESTAMP NOT NULL DEFAULT current_timestamp
 );
 
+
+CREATE INDEX idX_messages ON messages(time, id, creator_id, message);
+CREATE EXTENSION IF NOT EXISTS RUM;
+CREATE INDEX idX_search on messages USING RUM(to_tsvector('english', message));
+
 COMMIT;
